@@ -4,5 +4,5 @@ namespace MongoConsumer.Services.Kafka.TelemetryConsumer.Interfaces;
 
 public interface ITelemetryConsumer : IDisposable
 {
-    TelemetryDataDto? ConsumeTelemetryData();
+    TelemetryDataDto? ConsumeTelemetryData(CancellationToken cancellationToken = default);
 }

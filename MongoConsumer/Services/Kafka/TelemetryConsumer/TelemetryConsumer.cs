@@ -9,6 +9,7 @@ namespace MongoConsumer.Services.Kafka.TelemetryConsumer;
 public class TelemetryConsumer : ITelemetryConsumer
 {
     private readonly IConsumer<string, string> _kafkaConsumer;
+    private readonly CancellationTokenSource _disposeCts;
     private readonly TimeSpan _consumeTimeout;
     private readonly int _tailId;
     private bool _isDisposed;
@@ -17,6 +18,7 @@ public class TelemetryConsumer : ITelemetryConsumer
     {
         _isDisposed = false;
         _tailId = tailId;
+        _disposeCts = new CancellationTokenSource();
         _consumeTimeout = TimeSpan.FromMilliseconds(configuration.ConsumeTimeoutMs);
 
         ConsumerConfig consumerConfig = new ConsumerConfig
@@ -39,16 +41,23 @@ public class TelemetryConsumer : ITelemetryConsumer
         _kafkaConsumer.Assign(new[] { topicPartition });
     }
 
-    public TelemetryDataDto? ConsumeTelemetryData()
+    public TelemetryDataDto? ConsumeTelemetryData(CancellationToken cancellationToken = default)
     {
         if (_isDisposed)
         {
             return null;
         }
 
+        using CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken,
+            _disposeCts.Token
+        );
+
         try
         {
             ConsumeResult<string, string>? result = _kafkaConsumer.Consume(_consumeTimeout);
+
+            linkedCts.Token.ThrowIfCancellationRequested();
 
             if (result == null || result.Message == null)
             {
@@ -78,6 +87,8 @@ public class TelemetryConsumer : ITelemetryConsumer
 
         try
         {
+            _disposeCts.Cancel();
+            _disposeCts.Dispose();
             _kafkaConsumer.Unassign();
             _kafkaConsumer.Close();
             _kafkaConsumer.Dispose();

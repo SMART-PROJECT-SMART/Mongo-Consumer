@@ -7,5 +7,5 @@ public interface ITelemetryConsumerManager : IDisposable
     void AddConsumer(int tailId);
     void RemoveConsumer(int tailId);
     void UpdateConsumer(int oldTailId, int newTailId);
-    IEnumerable<TelemetryDataDto> ConsumeAllTelemetryData();
+    IEnumerable<TelemetryDataDto> ConsumeAllTelemetryData(CancellationToken cancellationToken = default);
 }

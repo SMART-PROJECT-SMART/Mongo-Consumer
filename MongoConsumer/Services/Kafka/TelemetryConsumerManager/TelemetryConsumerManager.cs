@@ -48,7 +48,7 @@ public class TelemetryConsumerManager : ITelemetryConsumerManager
         AddConsumer(newTailId);
     }
 
-    public IEnumerable<TelemetryDataDto> ConsumeAllTelemetryData()
+    public IEnumerable<TelemetryDataDto> ConsumeAllTelemetryData(CancellationToken cancellationToken = default)
     {
         if (_isDisposed)
         {
@@ -58,7 +58,7 @@ public class TelemetryConsumerManager : ITelemetryConsumerManager
         foreach (KeyValuePair<int, ITelemetryConsumer> consumerEntry in _consumers)
         {
             ITelemetryConsumer consumer = consumerEntry.Value;
-            TelemetryDataDto? telemetryData = consumer.ConsumeTelemetryData();
+            TelemetryDataDto? telemetryData = consumer.ConsumeTelemetryData(cancellationToken);
 
             if (telemetryData != null)
             {
