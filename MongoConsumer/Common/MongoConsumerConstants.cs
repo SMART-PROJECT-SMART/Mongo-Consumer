@@ -6,5 +6,15 @@
         {
             public const string DEVICE_MANAGER_CONFIG_SECTION = "DeviceManager";
         }
+
+        public static class HttpClients
+        {
+            public const string DEVICE_MANAGER_HTTP_CLIENT = "DeviceManagerHttpClient";
+        }
+
+        public static class DeviceManagerApiEndpoints
+        {
+            public const string GET_ALL_UAVS = "api/uav";
+        }
     }
 }
