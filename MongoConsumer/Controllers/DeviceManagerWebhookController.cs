@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MongoConsumer.Models.DTOs.DeviceManager;
+using MongoConsumer.Services.UAVChangeHandlers.Interfaces;
 
 namespace MongoConsumer.Controllers
 {
@@ -7,13 +8,21 @@ namespace MongoConsumer.Controllers
     [ApiController]
     public class DeviceManagerWebhookController : ControllerBase
     {
+        private readonly IUAVChangeHandlerFactory _handlerFactory;
+
+        public DeviceManagerWebhookController(IUAVChangeHandlerFactory handlerFactory)
+        {
+            _handlerFactory = handlerFactory;
+        }
+
         [HttpPost("uav-changed")]
         public async Task<ActionResult> UAVChanged(
             [FromBody] UAVChangedNotificationDto notification,
             CancellationToken cancellationToken
         )
         {
-            // TODO: handle UAV change based on notification.Operation
+            IUAVChangeHandler handler = _handlerFactory.CreateHandler(notification.Operation);
+            await handler.HandleAsync(notification.TailId, notification.NewTailId, cancellationToken);
             return Ok();
         }
     }
