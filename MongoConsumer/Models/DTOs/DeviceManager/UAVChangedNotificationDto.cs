@@ -2,4 +2,16 @@ using MongoConsumer.Common.Enums;
 
 namespace MongoConsumer.Models.DTOs.DeviceManager;
 
-public record UAVChangedNotificationDto(CrudOperation Operation, int TailId, int? NewTailId = null);
+public class UAVChangedNotificationDto
+{
+    public UAVChangedNotificationDto(CrudOperation operation, int tailId, int? newTailId = null)
+    {
+        Operation = operation;
+        TailId = tailId;
+        NewTailId = newTailId;
+    }
+
+    public CrudOperation Operation { get; set; }
+    public int TailId { get; set; }
+    public int? NewTailId { get; set; }
+}

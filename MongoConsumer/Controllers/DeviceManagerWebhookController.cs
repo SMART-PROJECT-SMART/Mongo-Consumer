@@ -22,7 +22,7 @@ namespace MongoConsumer.Controllers
         )
         {
             IUAVChangeHandler handler = _handlerFactory.CreateHandler(notification.Operation);
-            await handler.HandleAsync(notification.TailId, notification.NewTailId, cancellationToken);
+            await handler.HandleUAVChangeAsync(notification.TailId, notification.NewTailId, cancellationToken);
             return Ok();
         }
     }

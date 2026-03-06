@@ -1,3 +1,11 @@
 namespace MongoConsumer.Models.DTOs.DeviceManager;
 
-public record GetAllUAVsTailIdRo(IReadOnlyList<GetAllUAVsTailIdDto> UAVs);
+public class GetAllUAVsTailIdRo
+{
+    public GetAllUAVsTailIdRo(IReadOnlyList<GetAllUAVsTailIdDto> uavs)
+    {
+        UAVs = uavs;
+    }
+
+    public IReadOnlyList<GetAllUAVsTailIdDto> UAVs { get; set; }
+}

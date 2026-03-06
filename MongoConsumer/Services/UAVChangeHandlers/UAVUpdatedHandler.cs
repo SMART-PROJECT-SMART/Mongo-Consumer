@@ -12,7 +12,7 @@ public class UAVUpdatedHandler : IUAVChangeHandler
         _tailIdStorage = tailIdStorage;
     }
 
-    public Task HandleAsync(int tailId, int? newTailId = null, CancellationToken cancellationToken = default)
+    public Task HandleUAVChangeAsync(int tailId, int? newTailId = null, CancellationToken cancellationToken = default)
     {
         if (newTailId.HasValue && newTailId.Value != tailId)
         {
