@@ -1,8 +1,8 @@
-using Confluent.Kafka;
+using MongoConsumer.Models.DTOs.Kafka;
 
 namespace MongoConsumer.Services.Kafka.TelemetryConsumer.Interfaces;
 
 public interface ITelemetryConsumer : IDisposable
 {
-    ConsumeResult<string, string>? ConsumeTelemetryData();
+    TelemetryDataDto? ConsumeTelemetryData();
 }

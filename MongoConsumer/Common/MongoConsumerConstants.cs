@@ -16,5 +16,11 @@
         {
             public const string GET_ALL_UAVS = "api/uav";
         }
+
+        public static class Kafka
+        {
+            public const string KAFKA_CONFIG_SECTION = "Kafka";
+            public const int TELEMETRY_PARTITION = 0;
+        }
     }
 }

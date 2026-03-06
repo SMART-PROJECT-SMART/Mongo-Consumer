@@ -1,6 +1,7 @@
 using Confluent.Kafka;
 using MongoConsumer.Common;
 using MongoConsumer.Models.Configuration;
+using MongoConsumer.Models.DTOs.Kafka;
 using MongoConsumer.Services.Kafka.TelemetryConsumer.Interfaces;
 
 namespace MongoConsumer.Services.Kafka.TelemetryConsumer;
@@ -9,11 +10,13 @@ public class TelemetryConsumer : ITelemetryConsumer
 {
     private readonly IConsumer<string, string> _kafkaConsumer;
     private readonly TimeSpan _consumeTimeout;
+    private readonly int _tailId;
     private bool _isDisposed;
 
     public TelemetryConsumer(KafkaConsumerConfiguration configuration, int tailId)
     {
         _isDisposed = false;
+        _tailId = tailId;
         _consumeTimeout = TimeSpan.FromMilliseconds(configuration.ConsumeTimeoutMs);
 
         ConsumerConfig consumerConfig = new ConsumerConfig
@@ -36,7 +39,7 @@ public class TelemetryConsumer : ITelemetryConsumer
         _kafkaConsumer.Assign(new[] { topicPartition });
     }
 
-    public ConsumeResult<string, string>? ConsumeTelemetryData()
+    public TelemetryDataDto? ConsumeTelemetryData()
     {
         if (_isDisposed)
         {
@@ -45,7 +48,14 @@ public class TelemetryConsumer : ITelemetryConsumer
 
         try
         {
-            return _kafkaConsumer.Consume(_consumeTimeout);
+            ConsumeResult<string, string>? result = _kafkaConsumer.Consume(_consumeTimeout);
+
+            if (result == null || result.Message == null)
+            {
+                return null;
+            }
+
+            return new TelemetryDataDto(_tailId, result.Message.Key, result.Message.Value);
         }
         catch (ConsumeException)
         {
