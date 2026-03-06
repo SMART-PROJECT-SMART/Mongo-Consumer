@@ -3,6 +3,8 @@ using MongoConsumer.Common;
 using MongoConsumer.Models.Configuration;
 using MongoConsumer.Services.Clients.DeviceManagerClient;
 using MongoConsumer.Services.Clients.DeviceManagerClient.Interfaces;
+using MongoConsumer.Services.TailIdFetcher;
+using MongoConsumer.Services.TailIdFetcher.Interfaces;
 using MongoConsumer.Services.TailIdStorage;
 using MongoConsumer.Services.TailIdStorage.Interfaces;
 using MongoConsumer.Services.UAVChangeHandlers;
@@ -54,6 +56,8 @@ namespace MongoConsumer.Extensions
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
             services.AddSingleton<ITailIdStorageService, TailIdStorageService>();
+            services.AddSingleton<ITailIdFetcher, TailIdFetcher>();
+            services.AddHostedService(sp => sp.GetRequiredService<ITailIdFetcher>());
             services.AddSingleton<IUAVChangeHandlerFactory, UAVChangeHandlerFactory>();
             return services;
         }
