@@ -1,20 +1,20 @@
 using MongoConsumer.Models.DTOs.DeviceManager;
 using MongoConsumer.Services.Clients.DeviceManagerClient.Interfaces;
+using MongoConsumer.Services.Kafka.TelemetryConsumerManager.Interfaces;
 using MongoConsumer.Services.TailIdFetcher.Interfaces;
-using MongoConsumer.Services.TailIdStorage.Interfaces;
 
 namespace MongoConsumer.Services.TailIdFetcher;
 
 public class TailIdFetcher : ITailIdFetcher
 {
-    private readonly ITailIdStorageService _tailIdStorage;
+    private readonly ITelemetryConsumerManager _consumerManager;
     private readonly IDeviceManagerClient _deviceManagerClient;
 
     public TailIdFetcher(
-        ITailIdStorageService tailIdStorage,
+        ITelemetryConsumerManager consumerManager,
         IDeviceManagerClient deviceManagerClient)
     {
-        _tailIdStorage = tailIdStorage;
+        _consumerManager = consumerManager;
         _deviceManagerClient = deviceManagerClient;
     }
 
@@ -24,7 +24,7 @@ public class TailIdFetcher : ITailIdFetcher
 
         foreach (GetAllUAVsTailIdDto uav in response.UAVs)
         {
-            _tailIdStorage.AddTailId(uav.TailId);
+            _consumerManager.AddConsumer(uav.TailId);
         }
     }
 

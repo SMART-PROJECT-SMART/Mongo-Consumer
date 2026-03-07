@@ -1,7 +1,6 @@
 using Confluent.Kafka;
 using MongoConsumer.Common;
 using MongoConsumer.Models.Configuration;
-using MongoConsumer.Models.DTOs.Kafka;
 using MongoConsumer.Services.Kafka.TelemetryConsumer.Interfaces;
 
 namespace MongoConsumer.Services.Kafka.TelemetryConsumer;
@@ -9,16 +8,22 @@ namespace MongoConsumer.Services.Kafka.TelemetryConsumer;
 public class TelemetryConsumer : ITelemetryConsumer
 {
     private readonly IConsumer<string, string> _kafkaConsumer;
-    private readonly CancellationTokenSource _disposeCts;
+    private readonly ILogger<TelemetryConsumer> _logger;
+    private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly TimeSpan _consumeTimeout;
     private readonly int _tailId;
+    private readonly Task _consumeTask;
     private bool _isDisposed;
 
-    public TelemetryConsumer(KafkaConsumerConfiguration configuration, int tailId)
+    public TelemetryConsumer(
+        KafkaConsumerConfiguration configuration,
+        int tailId,
+        ILogger<TelemetryConsumer> logger)
     {
-        _isDisposed = false;
         _tailId = tailId;
-        _disposeCts = new CancellationTokenSource();
+        _logger = logger;
+        _isDisposed = false;
+        _cancellationTokenSource = new CancellationTokenSource();
         _consumeTimeout = TimeSpan.FromMilliseconds(configuration.ConsumeTimeoutMs);
 
         ConsumerConfig consumerConfig = new ConsumerConfig
@@ -39,40 +44,43 @@ public class TelemetryConsumer : ITelemetryConsumer
             new Partition(MongoConsumerConstants.Kafka.TELEMETRY_PARTITION)
         );
         _kafkaConsumer.Assign(new[] { topicPartition });
-    }
 
-    public TelemetryDataDto? ConsumeTelemetryData(CancellationToken cancellationToken = default)
-    {
-        if (_isDisposed)
-        {
-            return null;
-        }
-
-        using CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken,
-            _disposeCts.Token
+        _consumeTask = Task.Factory.StartNew(
+            ConsumeLoop,
+            _cancellationTokenSource.Token,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default
         );
 
-        try
+        _logger.LogInformation("Consumer started for TailId={TailId}", _tailId);
+    }
+
+    private void ConsumeLoop()
+    {
+        while (!_cancellationTokenSource.Token.IsCancellationRequested)
         {
-            ConsumeResult<string, string>? result = _kafkaConsumer.Consume(_consumeTimeout);
-
-            linkedCts.Token.ThrowIfCancellationRequested();
-
-            if (result == null || result.Message == null)
+            try
             {
-                return null;
-            }
+                ConsumeResult<string, string>? result = _kafkaConsumer.Consume(_consumeTimeout);
 
-            return new TelemetryDataDto(_tailId, result.Message.Key, result.Message.Value);
-        }
-        catch (ConsumeException)
-        {
-            return null;
-        }
-        catch (OperationCanceledException)
-        {
-            return null;
+                if (result?.Message != null)
+                {
+                    _logger.LogInformation(
+                        "Consumed telemetry: TailId={TailId}, Key={Key}, Value={Value}",
+                        _tailId,
+                        result.Message.Key,
+                        result.Message.Value
+                    );
+                }
+            }
+            catch (ConsumeException ex)
+            {
+                _logger.LogError(ex, "Consume error for TailId={TailId}", _tailId);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
         }
     }
 
@@ -85,16 +93,20 @@ public class TelemetryConsumer : ITelemetryConsumer
 
         _isDisposed = true;
 
+        _cancellationTokenSource.Cancel();
+
         try
         {
-            _disposeCts.Cancel();
-            _disposeCts.Dispose();
-            _kafkaConsumer.Unassign();
-            _kafkaConsumer.Close();
-            _kafkaConsumer.Dispose();
+            _consumeTask.Wait();
         }
-        catch
+        catch (AggregateException)
         {
         }
+
+        _cancellationTokenSource.Dispose();
+        _kafkaConsumer.Close();
+        _kafkaConsumer.Dispose();
+
+        _logger.LogInformation("Consumer stopped for TailId={TailId}", _tailId);
     }
 }
