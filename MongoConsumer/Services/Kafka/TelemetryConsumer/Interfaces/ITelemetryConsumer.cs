@@ -1,4 +1,4 @@
-namespace MongoConsumer.Services.Kafka.TelemetryConsumer.Interfaces;
+namespace MongoConsumer.Services.Kafka.Consumers.Interfaces;
 
 public interface ITelemetryConsumer : IDisposable
 {

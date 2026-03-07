@@ -1,27 +1,20 @@
 using Confluent.Kafka;
 using MongoConsumer.Common;
 using MongoConsumer.Models.Configuration;
-using MongoConsumer.Services.Kafka.TelemetryConsumer.Interfaces;
+using MongoConsumer.Services.Kafka.Consumers.Interfaces;
 
-namespace MongoConsumer.Services.Kafka.TelemetryConsumer;
+namespace MongoConsumer.Services.Kafka.Consumers;
 
 public class TelemetryConsumer : ITelemetryConsumer
 {
     private readonly IConsumer<string, string> _kafkaConsumer;
-    private readonly ILogger<TelemetryConsumer> _logger;
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly TimeSpan _consumeTimeout;
-    private readonly int _tailId;
     private readonly Task _consumeTask;
     private bool _isDisposed;
 
-    public TelemetryConsumer(
-        KafkaConsumerConfiguration configuration,
-        int tailId,
-        ILogger<TelemetryConsumer> logger)
+    public TelemetryConsumer(KafkaConsumerConfiguration configuration, int tailId)
     {
-        _tailId = tailId;
-        _logger = logger;
         _isDisposed = false;
         _cancellationTokenSource = new CancellationTokenSource();
         _consumeTimeout = TimeSpan.FromMilliseconds(configuration.ConsumeTimeoutMs);
@@ -51,8 +44,6 @@ public class TelemetryConsumer : ITelemetryConsumer
             TaskCreationOptions.LongRunning,
             TaskScheduler.Default
         );
-
-        _logger.LogInformation("Consumer started for TailId={TailId}", _tailId);
     }
 
     private void ConsumeLoop()
@@ -61,21 +52,10 @@ public class TelemetryConsumer : ITelemetryConsumer
         {
             try
             {
-                ConsumeResult<string, string>? result = _kafkaConsumer.Consume(_consumeTimeout);
-
-                if (result?.Message != null)
-                {
-                    _logger.LogInformation(
-                        "Consumed telemetry: TailId={TailId}, Key={Key}, Value={Value}",
-                        _tailId,
-                        result.Message.Key,
-                        result.Message.Value
-                    );
-                }
+                _kafkaConsumer.Consume(_consumeTimeout);
             }
-            catch (ConsumeException ex)
+            catch (ConsumeException)
             {
-                _logger.LogError(ex, "Consume error for TailId={TailId}", _tailId);
             }
             catch (OperationCanceledException)
             {
@@ -106,7 +86,5 @@ public class TelemetryConsumer : ITelemetryConsumer
         _cancellationTokenSource.Dispose();
         _kafkaConsumer.Close();
         _kafkaConsumer.Dispose();
-
-        _logger.LogInformation("Consumer stopped for TailId={TailId}", _tailId);
     }
 }

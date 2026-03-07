@@ -1,4 +1,4 @@
-using MongoConsumer.Services.Kafka.TelemetryConsumer.Interfaces;
+using MongoConsumer.Services.Kafka.Consumers.Interfaces;
 
 namespace MongoConsumer.Services.Kafka.TelemetryConsumerFactory.Interfaces;
 

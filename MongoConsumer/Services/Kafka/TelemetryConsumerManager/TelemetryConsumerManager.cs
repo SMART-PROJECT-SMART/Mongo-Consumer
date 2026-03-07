@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using MongoConsumer.Services.Kafka.TelemetryConsumer.Interfaces;
+using MongoConsumer.Services.Kafka.Consumers.Interfaces;
 using MongoConsumer.Services.Kafka.TelemetryConsumerFactory.Interfaces;
 using MongoConsumer.Services.Kafka.TelemetryConsumerManager.Interfaces;
 
