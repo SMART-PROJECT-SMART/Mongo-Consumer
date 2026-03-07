@@ -6,7 +6,9 @@ builder
     .Services.AddWebApi()
     .AddAppConfiguration(builder.Configuration)
     .AddHTTPClients(builder.Configuration)
-    .AddServices();
+    .AddKafkaServices()
+    .AddHostedServices()
+    .AddUAVChangeHandlers();
 
 var app = builder.Build();
 

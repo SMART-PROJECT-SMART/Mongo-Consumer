@@ -1,25 +1,25 @@
 using MongoConsumer.Common.Enums;
-using MongoConsumer.Services.TailIdStorage.Interfaces;
+using MongoConsumer.Services.Kafka.TelemetryConsumerManager.Interfaces;
 using MongoConsumer.Services.UAVChangeHandlers.Interfaces;
 
 namespace MongoConsumer.Services.UAVChangeHandlers;
 
 public class UAVChangeHandlerFactory : IUAVChangeHandlerFactory
 {
-    private readonly ITailIdStorageService _tailIdStorage;
+    private readonly ITelemetryConsumerManager _consumerManager;
 
-    public UAVChangeHandlerFactory(ITailIdStorageService tailIdStorage)
+    public UAVChangeHandlerFactory(ITelemetryConsumerManager consumerManager)
     {
-        _tailIdStorage = tailIdStorage;
+        _consumerManager = consumerManager;
     }
 
     public IUAVChangeHandler CreateHandler(CrudOperation operation)
     {
         return operation switch
         {
-            CrudOperation.Created => new UAVCreatedHandler(_tailIdStorage),
-            CrudOperation.Updated => new UAVUpdatedHandler(_tailIdStorage),
-            CrudOperation.Deleted => new UAVDeletedHandler(_tailIdStorage),
+            CrudOperation.Created => new UAVCreatedHandler(_consumerManager),
+            CrudOperation.Updated => new UAVUpdatedHandler(_consumerManager),
+            CrudOperation.Deleted => new UAVDeletedHandler(_consumerManager),
             _ => throw new ArgumentException($"Unsupported operation: {operation}", nameof(operation))
         };
     }

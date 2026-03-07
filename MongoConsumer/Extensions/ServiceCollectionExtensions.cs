@@ -1,12 +1,13 @@
-﻿using System.Runtime.CompilerServices;
 using MongoConsumer.Common;
 using MongoConsumer.Models.Configuration;
 using MongoConsumer.Services.Clients.DeviceManagerClient;
 using MongoConsumer.Services.Clients.DeviceManagerClient.Interfaces;
+using MongoConsumer.Services.Kafka.TelemetryConsumerFactory;
+using MongoConsumer.Services.Kafka.TelemetryConsumerFactory.Interfaces;
+using MongoConsumer.Services.Kafka.TelemetryConsumerManager;
+using MongoConsumer.Services.Kafka.TelemetryConsumerManager.Interfaces;
 using MongoConsumer.Services.TailIdFetcher;
 using MongoConsumer.Services.TailIdFetcher.Interfaces;
-using MongoConsumer.Services.TailIdStorage;
-using MongoConsumer.Services.TailIdStorage.Interfaces;
 using MongoConsumer.Services.UAVChangeHandlers;
 using MongoConsumer.Services.UAVChangeHandlers.Interfaces;
 
@@ -31,6 +32,11 @@ namespace MongoConsumer.Extensions
                     MongoConsumerConstants.Configuration.DEVICE_MANAGER_CONFIG_SECTION
                 )
             );
+            services.Configure<KafkaConsumerConfiguration>(
+                configuration.GetSection(
+                    MongoConsumerConstants.Kafka.KAFKA_CONFIG_SECTION
+                )
+            );
             return services;
         }
 
@@ -53,11 +59,22 @@ namespace MongoConsumer.Extensions
             return services;
         }
 
-        public static IServiceCollection AddServices(this IServiceCollection services)
+        public static IServiceCollection AddKafkaServices(this IServiceCollection services)
         {
-            services.AddSingleton<ITailIdStorageService, TailIdStorageService>();
+            services.AddSingleton<ITelemetryConsumerFactory, TelemetryConsumerFactory>();
+            services.AddSingleton<ITelemetryConsumerManager, TelemetryConsumerManager>();
+            return services;
+        }
+
+        public static IServiceCollection AddHostedServices(this IServiceCollection services)
+        {
             services.AddSingleton<ITailIdFetcher, TailIdFetcher>();
             services.AddHostedService(sp => sp.GetRequiredService<ITailIdFetcher>());
+            return services;
+        }
+
+        public static IServiceCollection AddUAVChangeHandlers(this IServiceCollection services)
+        {
             services.AddSingleton<IUAVChangeHandlerFactory, UAVChangeHandlerFactory>();
             return services;
         }

@@ -1,22 +1,22 @@
-using MongoConsumer.Services.TailIdStorage.Interfaces;
+using MongoConsumer.Services.Kafka.TelemetryConsumerManager.Interfaces;
 using MongoConsumer.Services.UAVChangeHandlers.Interfaces;
 
 namespace MongoConsumer.Services.UAVChangeHandlers;
 
 public class UAVUpdatedHandler : IUAVChangeHandler
 {
-    private readonly ITailIdStorageService _tailIdStorage;
+    private readonly ITelemetryConsumerManager _consumerManager;
 
-    public UAVUpdatedHandler(ITailIdStorageService tailIdStorage)
+    public UAVUpdatedHandler(ITelemetryConsumerManager consumerManager)
     {
-        _tailIdStorage = tailIdStorage;
+        _consumerManager = consumerManager;
     }
 
     public Task HandleUAVChangeAsync(int tailId, int? newTailId = null, CancellationToken cancellationToken = default)
     {
         if (newTailId.HasValue && newTailId.Value != tailId)
         {
-            _tailIdStorage.UpdateTailId(tailId, newTailId.Value);
+            _consumerManager.UpdateConsumer(tailId, newTailId.Value);
         }
 
         return Task.CompletedTask;
