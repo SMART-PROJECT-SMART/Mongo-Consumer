@@ -59,12 +59,22 @@ namespace MongoConsumer.Extensions
             return services;
         }
 
-        public static IServiceCollection AddServices(this IServiceCollection services)
+        public static IServiceCollection AddKafkaServices(this IServiceCollection services)
         {
             services.AddSingleton<ITelemetryConsumerFactory, TelemetryConsumerFactory>();
             services.AddSingleton<ITelemetryConsumerManager, TelemetryConsumerManager>();
+            return services;
+        }
+
+        public static IServiceCollection AddHostedServices(this IServiceCollection services)
+        {
             services.AddSingleton<ITailIdFetcher, TailIdFetcher>();
             services.AddHostedService(sp => sp.GetRequiredService<ITailIdFetcher>());
+            return services;
+        }
+
+        public static IServiceCollection AddUAVChangeHandlers(this IServiceCollection services)
+        {
             services.AddSingleton<IUAVChangeHandlerFactory, UAVChangeHandlerFactory>();
             return services;
         }

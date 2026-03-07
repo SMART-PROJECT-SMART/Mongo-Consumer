@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using MongoConsumer.Models.Configuration;
+using MongoConsumer.Services.Kafka.TelemetryConsumer;
 using MongoConsumer.Services.Kafka.TelemetryConsumer.Interfaces;
 using MongoConsumer.Services.Kafka.TelemetryConsumerFactory.Interfaces;
 
@@ -12,7 +13,8 @@ public class TelemetryConsumerFactory : ITelemetryConsumerFactory
 
     public TelemetryConsumerFactory(
         IOptions<KafkaConsumerConfiguration> configuration,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory
+    )
     {
         _configuration = configuration.Value;
         _loggerFactory = loggerFactory;
