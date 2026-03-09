@@ -1,6 +1,9 @@
 using Confluent.Kafka;
+using MongoDB.Bson;
 using MongoConsumer.Common;
 using MongoConsumer.Models.Configuration;
+using MongoConsumer.Models.Entities;
+using MongoConsumer.Repositories.TelemetryRepository.Interfaces;
 using MongoConsumer.Services.Kafka.Consumers.Interfaces;
 
 namespace MongoConsumer.Services.Kafka.Consumers;
@@ -8,13 +11,20 @@ namespace MongoConsumer.Services.Kafka.Consumers;
 public class TelemetryConsumer : ITelemetryConsumer
 {
     private readonly IConsumer<string, string> _kafkaConsumer;
+    private readonly ITelemetryRepository _telemetryRepository;
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly TimeSpan _consumeTimeout;
+    private readonly int _tailId;
     private readonly Task _consumeTask;
     private bool _isDisposed;
 
-    public TelemetryConsumer(KafkaConsumerConfiguration configuration, int tailId)
+    public TelemetryConsumer(
+        KafkaConsumerConfiguration configuration,
+        int tailId,
+        ITelemetryRepository telemetryRepository)
     {
+        _tailId = tailId;
+        _telemetryRepository = telemetryRepository;
         _isDisposed = false;
         _cancellationTokenSource = new CancellationTokenSource();
         _consumeTimeout = TimeSpan.FromMilliseconds(configuration.ConsumeTimeoutMs);
@@ -38,21 +48,28 @@ public class TelemetryConsumer : ITelemetryConsumer
         );
         _kafkaConsumer.Assign(new[] { topicPartition });
 
-        _consumeTask = Task.Factory.StartNew(
-            ConsumeLoop,
-            _cancellationTokenSource.Token,
-            TaskCreationOptions.LongRunning,
-            TaskScheduler.Default
-        );
+        _consumeTask = Task.Run(ConsumeLoopAsync);
     }
 
-    private void ConsumeLoop()
+    private async Task ConsumeLoopAsync()
     {
         while (!_cancellationTokenSource.Token.IsCancellationRequested)
         {
             try
             {
-                _kafkaConsumer.Consume(_consumeTimeout);
+                ConsumeResult<string, string>? result = _kafkaConsumer.Consume(_consumeTimeout);
+
+                if (result?.Message != null)
+                {
+                    TelemetryDocument document = new TelemetryDocument
+                    {
+                        TailId = _tailId,
+                        TelemetryData = BsonDocument.Parse(result.Message.Value),
+                        Timestamp = DateTime.UtcNow
+                    };
+
+                    await _telemetryRepository.SaveAsync(document);
+                }
             }
             catch (ConsumeException)
             {
