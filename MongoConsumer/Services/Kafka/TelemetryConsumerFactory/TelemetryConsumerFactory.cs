@@ -11,17 +11,22 @@ public class TelemetryConsumerFactory : ITelemetryConsumerFactory
 {
     private readonly KafkaConsumerConfiguration _configuration;
     private readonly ITelemetryRepository _telemetryRepository;
+    private readonly ILoggerFactory _loggerFactory;
 
     public TelemetryConsumerFactory(
         IOptions<KafkaConsumerConfiguration> configuration,
-        ITelemetryRepository telemetryRepository)
+        ITelemetryRepository telemetryRepository,
+        ILoggerFactory loggerFactory
+    )
     {
         _configuration = configuration.Value;
         _telemetryRepository = telemetryRepository;
+        _loggerFactory = loggerFactory;
     }
 
     public ITelemetryConsumer CreateConsumer(int tailId)
     {
-        return new TelemetryConsumer(_configuration, tailId, _telemetryRepository);
+        ILogger<TelemetryConsumer> logger = _loggerFactory.CreateLogger<TelemetryConsumer>();
+        return new TelemetryConsumer(_configuration, tailId, _telemetryRepository, logger);
     }
 }
