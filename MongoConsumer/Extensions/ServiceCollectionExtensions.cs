@@ -1,5 +1,9 @@
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 using MongoConsumer.Common;
 using MongoConsumer.Models.Configuration;
+using MongoConsumer.Repositories.TelemetryRepository;
+using MongoConsumer.Repositories.TelemetryRepository.Interfaces;
 using MongoConsumer.Services.Clients.DeviceManagerClient;
 using MongoConsumer.Services.Clients.DeviceManagerClient.Interfaces;
 using MongoConsumer.Services.Kafka.TelemetryConsumerFactory;
@@ -37,6 +41,22 @@ namespace MongoConsumer.Extensions
                     MongoConsumerConstants.Kafka.KAFKA_CONFIG_SECTION
                 )
             );
+            services.Configure<MongoDbConfiguration>(
+                configuration.GetSection(
+                    MongoConsumerConstants.Configuration.MONGODB_CONFIG_SECTION
+                )
+            );
+            return services;
+        }
+
+        public static IServiceCollection AddMongoDbServices(this IServiceCollection services)
+        {
+            services.AddSingleton<IMongoClient>(sp =>
+            {
+                MongoDbConfiguration config = sp.GetRequiredService<IOptions<MongoDbConfiguration>>().Value;
+                return new MongoClient(config.ConnectionString);
+            });
+            services.AddSingleton<ITelemetryRepository, TelemetryRepository>();
             return services;
         }
 

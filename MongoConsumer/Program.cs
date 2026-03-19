@@ -6,6 +6,7 @@ builder
     .Services.AddWebApi()
     .AddAppConfiguration(builder.Configuration)
     .AddHTTPClients(builder.Configuration)
+    .AddMongoDbServices()
     .AddKafkaServices()
     .AddHostedServices()
     .AddUAVChangeHandlers();

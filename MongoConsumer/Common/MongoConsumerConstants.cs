@@ -5,6 +5,12 @@
         public static class Configuration
         {
             public const string DEVICE_MANAGER_CONFIG_SECTION = "DeviceManager";
+            public const string MONGODB_CONFIG_SECTION = "MongoDb";
+        }
+
+        public static class Collections
+        {
+            public const string TELEMETRY_COLLECTION = "telemetry";
         }
 
         public static class HttpClients
